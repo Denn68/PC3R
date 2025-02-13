@@ -34,30 +34,21 @@ func lecteur(c1 chan string, filePath string){
 		if res {
 			c1 <- scanner.Text()
 		} else {
-			fmt.Println("Erreur lors de la lecture du fichier :", err)
+			fmt.Println("Fin du doc")
 			break
 		}
 	}
-	fmt.Println("J'ai fini")
-	/*
-	for scanner.Scan() {
-		c1 <- scanner.Text()
-	}
-
-	if err := scanner.Err(); err != nil {
-		fmt.Println("Erreur lors de la lecture du fichier :", err)
-	}*/
 
 }
 
-func travailleurs(c1 chan string, id int, c2 chan PaquetPrive, c3 chan Paquet){
+func travailleur(c1 chan string, id int, c2 chan PaquetPrive, c3 chan Paquet){
 	for {
 		line := <- c1
 
 		splittedLine := strings.Split(line, ",")
 		pck := Paquet{
-			Arrivee: splittedLine[1],
-			Depart: splittedLine[2],
+			Arrivee: splittedLine[2],
+			Depart: splittedLine[1],
 			Arret: 0,
 		}
 		c := make(chan Paquet, 0)
@@ -93,7 +84,7 @@ func serveurCalcul(c2 chan PaquetPrive) {
 			newPaquet := Paquet{
 				Depart: paquetPrive.P.Depart,
 				Arrivee: paquetPrive.P.Arrivee,
-				Arret: t2.Hour() - t1.Hour(),
+				Arret: int(t2.Sub(t1).Minutes()),
 			}
 			paquetPrive.C <- newPaquet
 		}(paquetPrive)
@@ -111,20 +102,20 @@ func reducteur(c3 chan Paquet, c4 chan int, c5 chan float64) {
 			compteur++
 			temps = temps + paquet.Arret
 		case <- c4:
+			if (compteur > 0){
+				moyenne = float64(temps) / float64(compteur)
+			}
+			c5 <- moyenne
 			break
 		}
 	}
-	if (compteur > 0){
-		moyenne = float64(temps) / float64(compteur)
-		fmt.Println("Réducteur à renvoyer la différence de durée :" , moyenne)
-	}
-	c5 <- moyenne
+	
 
 }
 
 func main(){
 	nbRequetes := 10
-	nbTravailleurs := 10
+	nbTravailleur := 10
 	lines := make(chan string, 0)
 	paquetsServeur := make(chan PaquetPrive, nbRequetes)
 	paquetsReducteur := make(chan Paquet)
@@ -132,14 +123,14 @@ func main(){
 	moyenne := make(chan float64, 0)
 
 	go func() {lecteur(lines, "stop_times.txt")}()
-	for i:=0; i<nbTravailleurs; i++ {
-		go func() {travailleurs(lines, i, paquetsServeur, paquetsReducteur)}()
+	for i:=0; i<nbTravailleur; i++ {
+		go func() {travailleur(lines, i, paquetsServeur, paquetsReducteur)}()
 	}
 	go func() {serveurCalcul(paquetsServeur)}()
 	go func() {reducteur(paquetsReducteur, fin, moyenne)}()
 
-	time.Sleep(10 * time.Second)
+	time.Sleep(2 * time.Second)
 	fin <- 0
 	result := <- moyenne
-	fmt.Println(result)
+	fmt.Println("Réducteur à renvoyer la différence de durée :" , result, "min")
 }
