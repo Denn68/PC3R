@@ -28,7 +28,7 @@ var pers_vide = st.Personne{Nom: "", Prenom: "", Age: 0, Sexe: "M"} // une perso
 type personne_emp struct {
 	personne st.Personne
 	ligne int
-	aFaire  []func(*st.Personne)
+	aFaire  []func(st.Personne) st.Personne
 	statut string
 }
 
@@ -48,8 +48,9 @@ type personne_int interface {
 // fabrique une personne à partir d'une ligne du fichier des conseillers municipaux
 // à changer si un autre fichier est utilisé
 func personne_de_ligne(l string) st.Personne {
-	separateur := regexp.MustCompile("\u0009") // oui, les donnees sont separees par des tabulations ... merci la Republique Francaise
+	separateur := regexp.MustCompile(";") // oui, les donnees sont separees par des tabulations ... merci la Republique Francaise
 	separation := separateur.Split(l, -1)
+	fmt.Println(separation)
 	naiss, _ := time.Parse("2/1/2006", separation[7])
 	a1, _, _ := time.Now().Date()
 	a2, _, _ := naiss.Date()
@@ -68,17 +69,17 @@ func (p *personne_emp) initialise() {
 	p.personne = personne_de_ligne(ligne)
 	nbTravaux := rand.Intn(5) + 1
 	for i := 0; i < nbTravaux; i++ {
-		p.afaire = append(p.afaire, tr.UnTravail())
+		p.aFaire = append(p.aFaire, tr.UnTravail())
 	}
 	p.statut = "R"
 }
 
 func (p *personne_emp) travaille() {
-	if len(p.afaire) > 0 {
-		p.afaire[0](&p.personne)
-		p.afaire = p.afaire[1:]
+	if len(p.aFaire) > 0 {
+		p.aFaire[0](p.personne)
+		p.aFaire = p.aFaire[1:]
 	}
-	if len(p.afaire) == 0 {
+	if len(p.aFaire) == 0 {
 		p.statut = "C"
 	}
 }
@@ -104,10 +105,12 @@ func (p personne_dist) travaille() {
 
 func (p personne_dist) vers_string() string {
 	// A FAIRE
+	return ""
 }
 
 func (p personne_dist) donne_statut() string {
 	// A FAIRE
+	return ""
 }
 
 // *** CODE DES GOROUTINES DU SYSTEME ***
@@ -145,21 +148,24 @@ func ouvrier(gestionnaires chan personne_int, collecteurs chan personne_int) {
 		switch p.donne_statut() {
 		case "V":
 			p.initialise()
+			/*
 			select {
 				case gestionnaires <- p:
 					fmt.Println("Le paquet a été initialisé par l'ouvrier")
 				default:
 					fmt.Println("Le gestionnaire est inondé")
-			}
+			}*/
 			gestionnaires <- p
 		case "R":
 			p.travaille()
+			/*
 			select {
 				case gestionnaires <- p:
 					fmt.Println("Le paquet a été travaillé par l'ouvrier")
 				default:
 					fmt.Println("Le gestionnaire est inondé")
-			}
+			}*/
+			gestionnaires <- p
 		case "C":
 			collecteurs <- p
 		}
@@ -172,7 +178,7 @@ func ouvrier(gestionnaires chan personne_int, collecteurs chan personne_int) {
 func producteur(gestionnaires chan personne_int) {
 	for {
 		rand.Seed(time.Now().UnixNano())
-		p := &personne_emp{personne: nil, ligne: rand.Intn(TAILLE_SOURCE), aFaire: nil, statut: "V"}
+		p := &personne_emp{personne: pers_vide, ligne: rand.Intn(TAILLE_SOURCE), aFaire: nil, statut: "V"}
 		gestionnaires <- p
 	}
 }
@@ -190,16 +196,26 @@ func producteur_distant() {
 // plus rendre les paquets surlesquels ils travaillent pour en prendre des autres
 func gestionnaire(entree chan personne_int, sortie chan personne_int) {
 	queue := make([]personne_int, 0)
+
 	for {
-		if len(queue) > 0 {
-			sortie <- queue[0]
-			queue = queue[1:]
-		} else {
-			p := <-entree
-			queue = append(queue, p)
+		select {
+			case p := <-entree:
+				queue = append(queue, p) 
+			default:
+				fmt.Println("Inondé")
+			}
+
+			if len(queue) > 0 {
+				select {
+				case sortie <- queue[0]: 
+					queue = queue[1:]
+				default:
+					time.Sleep(15 * time.Millisecond)
+			}
 		}
 	}
 }
+
 
 // Partie 1: le collecteur recoit des personne_int dont le statut est c, il les collecte dans un journal
 // quand il recoit un signal de fin du temps, il imprime son journal.
@@ -223,26 +239,24 @@ func main() {
 		fmt.Println("Format: client <port> <millisecondes d'attente>")
 		return
 	}
-	port, _ := strconv.Atoi(os.Args[1]) // utile pour la partie 2
+	//port, _ := strconv.Atoi(os.Args[1]) // utile pour la partie 2
 	millis, _ := strconv.Atoi(os.Args[2]) // duree du timeout 
 	fintemps := make(chan int)
 	// A FAIRE
 	// creer les canaux
 	// lancer les goroutines (parties 1 et 2): 1 lecteur, 1 collecteur, des producteurs, des gestionnaires, des ouvriers
 	// lancer les goroutines (partie 2): des producteurs distants, un proxy
-	lignes := make(chan int, 10)
-	gestionnaires := make(chan personne_int, 5)
-	collecteurs := make(chan personne_int, 5)
+	gestionnaires := make(chan personne_int, TAILLE_G)
+	collecteurs := make(chan personne_int)
 	fin := make(chan int)
 
-	go lecteur(lignes)
-	for i := 0; i < 2; i++ {
-		go producteur(lignes, gestionnaires)
+	for i := 0; i < NB_P; i++ {
+		go producteur(gestionnaires)
 	}
-	for i := 0; i < 2; i++ {
+	for i := 0; i < NB_G; i++ {
 		go gestionnaire(gestionnaires, gestionnaires)
 	}
-	for i := 0; i < 4; i++ {
+	for i := 0; i < NB_O; i++ {
 		go ouvrier(gestionnaires, collecteurs)
 	}
 	go collecteur(collecteurs, fin)
