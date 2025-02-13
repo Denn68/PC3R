@@ -38,6 +38,7 @@ func lecteur(c1 chan string, filePath string){
 			break
 		}
 	}
+	fmt.Println("J'ai fini")
 	/*
 	for scanner.Scan() {
 		c1 <- scanner.Text()
