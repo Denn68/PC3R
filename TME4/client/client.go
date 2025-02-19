@@ -1,40 +1,52 @@
 package main
 
 import (
+	"bufio"
 	"fmt"
 	"math/rand"
+	"net"
 	"os"
 	"regexp"
 	"strconv"
+	"strings"
 	"time"
-	"bufio"
+
+	"github.com/google/uuid"
 
 	st "client/structures" // contient la structure Personne
-	tr "client/travaux" // contient les fonctions de travail sur les Personnes
+	tr "client/travaux"    // contient les fonctions de travail sur les Personnes
 )
 
-var ADRESSE string = "localhost"                           // adresse de base pour la Partie 2
+var ADRESSE string = "localhost"                                   // adresse de base pour la Partie 2
 var FICHIER_SOURCE string = "./elus-conseillers-municipaux-cm.csv" // fichier dans lequel piocher des personnes
-var TAILLE_SOURCE int = 450000                             // inferieure au nombre de lignes du fichier, pour prendre une ligne au hasard
-var TAILLE_G int = 5                                       // taille du tampon des gestionnaires
-var NB_G int = 2                                           // nombre de gestionnaires
-var NB_P int = 2                                           // nombre de producteurs
-var NB_O int = 4                                           // nombre d'ouvriers
-var NB_PD int = 2                                          // nombre de producteurs distants pour la Partie 2
+var TAILLE_SOURCE int = 450000                                     // inferieure au nombre de lignes du fichier, pour prendre une ligne au hasard
+var TAILLE_G int = 5                                               // taille du tampon des gestionnaires
+var NB_G int = 2                                                   // nombre de gestionnaires
+var NB_P int = 2                                                   // nombre de producteurs
+var NB_O int = 4                                                   // nombre d'ouvriers
+var NB_PD int = 2                                                  // nombre de producteurs distants pour la Partie 2
 
 var pers_vide = st.Personne{Nom: "", Prenom: "", Age: 0, Sexe: "M"} // une personne vide
+
+var initializeChan = make(chan int)
+var travailleChan = make(chan int)
+var versStringChan = make(chan int)
+var donneStatutChan = make(chan int)
+
+var versStringAnswerChan = make(chan string)
+var donneStatutAnswerChan = make(chan string)
 
 // paquet de personne, sur lequel on peut travailler, implemente l'interface personne_int
 type personne_emp struct {
 	personne st.Personne
-	ligne int
-	aFaire  []func(st.Personne) st.Personne
-	statut string
+	ligne    int
+	aFaire   []func(st.Personne) st.Personne
+	statut   string
 }
 
 // paquet de personne distante, pour la Partie 2, implemente l'interface personne_int
 type personne_dist struct {
-	// A FAIRE
+	id string
 }
 
 // interface des personnes manipulees par les ouvriers, les
@@ -63,9 +75,9 @@ func personne_de_ligne(l string) st.Personne {
 func (p *personne_emp) initialise() {
 	chanLigne := make(chan string)
 
-	go func() {lecteur(p.ligne, chanLigne)}()
+	go func() { lecteur(p.ligne, chanLigne) }()
 
-	ligne := <- chanLigne
+	ligne := <-chanLigne
 	p.personne = personne_de_ligne(ligne)
 	nbTravaux := rand.Intn(5) + 1
 	for i := 0; i < nbTravaux; i++ {
@@ -96,29 +108,89 @@ func (p *personne_emp) donne_statut() string {
 // ces méthodes doivent appeler le proxy (aucun calcul direct)
 
 func (p personne_dist) initialise() {
-	// A FAIRE
+	initializeChan <- 0
 }
 
 func (p personne_dist) travaille() {
-	// A FAIRE
+	travailleChan <- 0
 }
 
 func (p personne_dist) vers_string() string {
-	// A FAIRE
-	return ""
+	versStringChan <- 0
+	return <-versStringAnswerChan
 }
 
 func (p personne_dist) donne_statut() string {
-	// A FAIRE
-	return ""
+	donneStatutChan <- 0
+	return <-donneStatutAnswerChan
 }
 
 // *** CODE DES GOROUTINES DU SYSTEME ***
 
 // Partie 2: contacté par les méthodes de personne_dist, le proxy appelle la méthode à travers le réseau et récupère le résultat
 // il doit utiliser une connection TCP sur le port donné en ligne de commande
-func proxy() {
-	// A FAIRE
+func proxy(port string) {
+	conn, err := net.Dial("tcp", ":"+port)
+	if err != nil {
+		fmt.Println("Erreur du lancement du proxy:", err)
+		return
+	}
+	defer conn.Close()
+
+	for {
+		select {
+		case <-initializeChan:
+			_, err = conn.Write([]byte("initialize"))
+			if err != nil {
+				fmt.Println("Erreur d'envoi de la requête:", err)
+				return
+			}
+			reponse, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				fmt.Println("Erreur de lecture de la réponse:", err)
+				return
+			}
+			fmt.Println("Reponse:", reponse)
+		case <-travailleChan:
+			_, err = conn.Write([]byte("travaille"))
+			if err != nil {
+				fmt.Println("Erreur d'envoi de la requête:", err)
+				return
+			}
+			reponse, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				fmt.Println("Erreur de lecture de la réponse:", err)
+				return
+			}
+			fmt.Println("Reponse:", reponse)
+		case <-versStringChan:
+			_, err = conn.Write([]byte("vers_string"))
+			if err != nil {
+				fmt.Println("Erreur d'envoi de la requête:", err)
+				return
+			}
+			reponse, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				fmt.Println("Erreur de lecture de la réponse:", err)
+				return
+			}
+			versStringAnswerChan <- strings.TrimSpace(reponse)
+		case <-donneStatutChan:
+			_, err = conn.Write([]byte("donne_statut"))
+			if err != nil {
+				fmt.Println("Erreur d'envoi de la requête:", err)
+				return
+			}
+			reponse, err := bufio.NewReader(conn).ReadString('\n')
+			if err != nil {
+				fmt.Println("Erreur de lecture de la réponse:", err)
+				return
+			}
+			donneStatutAnswerChan <- strings.TrimSpace(reponse)
+		default:
+			fmt.Println("Rien ne se passe")
+		}
+	}
 }
 
 // Partie 1 : contacté par la méthode initialise() de personne_emp, récupère une ligne donnée dans le fichier source
@@ -149,22 +221,22 @@ func ouvrier(gestionnaires chan personne_int, collecteurs chan personne_int) {
 		case "V":
 			p.initialise()
 			/*
-			select {
-				case gestionnaires <- p:
-					fmt.Println("Le paquet a été initialisé par l'ouvrier")
-				default:
-					fmt.Println("Le gestionnaire est inondé")
-			}*/
+				select {
+					case gestionnaires <- p:
+						fmt.Println("Le paquet a été initialisé par l'ouvrier")
+					default:
+						fmt.Println("Le gestionnaire est inondé")
+				}*/
 			gestionnaires <- p
 		case "R":
 			p.travaille()
 			/*
-			select {
-				case gestionnaires <- p:
-					fmt.Println("Le paquet a été travaillé par l'ouvrier")
-				default:
-					fmt.Println("Le gestionnaire est inondé")
-			}*/
+				select {
+					case gestionnaires <- p:
+						fmt.Println("Le paquet a été travaillé par l'ouvrier")
+					default:
+						fmt.Println("Le gestionnaire est inondé")
+				}*/
 			gestionnaires <- p
 		case "C":
 			collecteurs <- p
@@ -187,7 +259,32 @@ func producteur(gestionnaires chan personne_int) {
 // utilisé pour retrouver l'object sur le serveur
 // la creation sur le client d'une personne_dist doit declencher la creation sur le serveur d'une "vraie" personne, initialement vide, de statut V
 func producteur_distant() {
-	// A FAIRE
+	for {
+		p := &personne_dist{id: uuid.New().String()}
+
+		// Informer le serveur de la création d'une nouvelle personne
+		conn, err := net.Dial("tcp", fmt.Sprintf("%s:%d", ADRESSE, PORT))
+		if err != nil {
+			fmt.Println("Erreur de connexion au serveur pour la création de personne distante:", err)
+			continue
+		}
+		defer conn.Close()
+
+		_, err = conn.Write([]byte("create:" + id + "\n"))
+		if err != nil {
+			fmt.Println("Erreur d'envoi de la requête de création:", err)
+			continue
+		}
+
+		response, err := bufio.NewReader(conn).ReadString('\n')
+		if err != nil || strings.TrimSpace(response) != "OK" {
+			fmt.Println("Erreur lors de la création de la personne distante:", err, "Réponse:", response)
+			continue
+		}
+
+		// Envoyer la personne distante au gestionnaire
+		gestionnaires <- p
+	}
 }
 
 // Partie 1: les gestionnaires recoivent des personne_int des producteurs et des ouvriers et maintiennent chacun une file de personne_int
@@ -199,23 +296,22 @@ func gestionnaire(entree chan personne_int, sortie chan personne_int) {
 
 	for {
 		select {
-			case p := <-entree:
-				queue = append(queue, p) 
-			default:
-				fmt.Println("Inondé")
-			}
+		case p := <-entree:
+			queue = append(queue, p)
+		default:
+			fmt.Println("Inondé")
+		}
 
-			if len(queue) > 0 {
-				select {
-				case sortie <- queue[0]: 
-					queue = queue[1:]
-				default:
-					time.Sleep(15 * time.Millisecond)
+		if len(queue) > 0 {
+			select {
+			case sortie <- queue[0]:
+				queue = queue[1:]
+			default:
+				time.Sleep(15 * time.Millisecond)
 			}
 		}
 	}
 }
-
 
 // Partie 1: le collecteur recoit des personne_int dont le statut est c, il les collecte dans un journal
 // quand il recoit un signal de fin du temps, il imprime son journal.
@@ -239,9 +335,8 @@ func main() {
 		fmt.Println("Format: client <port> <millisecondes d'attente>")
 		return
 	}
-	//port, _ := strconv.Atoi(os.Args[1]) // utile pour la partie 2
-	millis, _ := strconv.Atoi(os.Args[2]) // duree du timeout 
-	fintemps := make(chan int)
+	port, _ := strconv.Atoi(os.Args[1])   // utile pour la partie 2
+	millis, _ := strconv.Atoi(os.Args[2]) // duree du timeout
 	// A FAIRE
 	// creer les canaux
 	// lancer les goroutines (parties 1 et 2): 1 lecteur, 1 collecteur, des producteurs, des gestionnaires, des ouvriers
@@ -262,6 +357,6 @@ func main() {
 	go collecteur(collecteurs, fin)
 
 	time.Sleep(time.Duration(millis) * time.Millisecond)
-	fintemps <- 0
-	<-fintemps
+	fin <- 0
+	<-fin
 }
