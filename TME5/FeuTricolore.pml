@@ -5,7 +5,7 @@ active proctype fin(chan obs) {
     mtype couleur = Indetermine;
     clignotant = true;
     couleur = Orange;
-    obs ? couleur, clignotant;
+    obs ! couleur, clignotant;
     evert:
     couleur = Vert;
     obs ! couleur, clignotant;
@@ -26,9 +26,9 @@ active proctype fin(chan obs) {
     couleur = Orange;
     obs ! couleur, clignotant;
     if
-    :: true -> goto eorange;
-    :: true -> goto erouge;
-    :: true -> goto panne;
+    :: true -> goto eorange
+    :: true -> goto erouge
+    :: true -> goto panne
     fi
     panne:
     couleur = Orange;
@@ -45,16 +45,22 @@ active proctype observateur(chan obs){
     mtype coul = Indetermine;
     do
     ::obs ? coul, clignote ->
+    /*
+    Version avec la trace 1
     if
     :: coul == Vert -> assert(ancienne==Rouge);
     :: coul == Rouge -> assert(ancienne==Orange);
     :: coul == Orange -> assert(ancienne!=Rouge);
     fi
+    */
+    :: coul == Vert -> assert(ancienne!=Orange);
+    :: coul == Rouge -> assert(ancienne!=Vert);
+    :: coul == Orange -> assert(ancienne!=Rouge);
     od
 }
 
 init {
-    chan obs = [0] of {int, int};
+    chan obs = [0] of {mtype, int};
     run fin(obs);
     run observateur(obs);
 }
