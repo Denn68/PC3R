@@ -47,6 +47,7 @@ type personne_emp struct {
 // paquet de personne distante, pour la Partie 2, implemente l'interface personne_int
 type personne_dist struct {
 	id string
+	proxy chan string
 }
 
 // interface des personnes manipulees par les ouvriers, les
@@ -220,23 +221,23 @@ func ouvrier(gestionnaires chan personne_int, collecteurs chan personne_int) {
 		switch p.donne_statut() {
 		case "V":
 			p.initialise()
-			/*
-				select {
-					case gestionnaires <- p:
-						fmt.Println("Le paquet a été initialisé par l'ouvrier")
-					default:
-						fmt.Println("Le gestionnaire est inondé")
-				}*/
+			
+			select {
+				case gestionnaires <- p:
+					fmt.Println("Le paquet a été initialisé par l'ouvrier")
+				default:
+					fmt.Println("Le gestionnaire est inondé")
+			}
 			gestionnaires <- p
 		case "R":
 			p.travaille()
-			/*
-				select {
-					case gestionnaires <- p:
-						fmt.Println("Le paquet a été travaillé par l'ouvrier")
-					default:
-						fmt.Println("Le gestionnaire est inondé")
-				}*/
+			
+			select {
+				case gestionnaires <- p:
+					fmt.Println("Le paquet a été travaillé par l'ouvrier")
+				default:
+					fmt.Println("Le gestionnaire est inondé")
+			}
 			gestionnaires <- p
 		case "C":
 			collecteurs <- p
@@ -250,7 +251,10 @@ func ouvrier(gestionnaires chan personne_int, collecteurs chan personne_int) {
 func producteur(gestionnaires chan personne_int) {
 	for {
 		rand.Seed(time.Now().UnixNano())
-		p := &personne_emp{personne: pers_vide, ligne: rand.Intn(TAILLE_SOURCE), aFaire: nil, statut: "V"}
+		p := &personne_emp{
+			personne: pers_vide,
+			ligne: rand.Intn(TAILLE_SOURCE),
+			aFaire: nil, statut: "V"}
 		gestionnaires <- p
 	}
 }
