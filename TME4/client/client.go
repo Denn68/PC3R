@@ -27,7 +27,6 @@ var NB_PD int = 2                                                         // nom
 
 var pers_vide = st.Personne{Nom: "", Prenom: "", Age: 0, Sexe: "M"} // une personne vide
 
-var creerChan = make(chan int)
 var initializeChan = make(chan int)
 var travailleChan = make(chan int)
 var versStringChan = make(chan int)
