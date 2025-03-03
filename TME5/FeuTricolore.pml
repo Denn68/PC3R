@@ -1,10 +1,16 @@
 mtype = {Rouge, Vert, Orange, Indetermine};
+
+chan obs = [0] of {mtype, int};
  
-active proctype fin(chan obs) {
+active proctype fin() {
     bool clignotant = false;
     mtype couleur = Indetermine;
-    clignotant = true;
+    initial:
     couleur = Orange;
+    if
+    :: true -> goto initial
+    :: true -> goto erouge
+    fi
     obs ! couleur, clignotant;
     evert:
     couleur = Vert;
@@ -31,6 +37,7 @@ active proctype fin(chan obs) {
     :: true -> goto panne
     fi
     panne:
+    printf("Panne\n");
     couleur = Orange;
     clignotant = true;
     obs ! couleur, clignotant;
@@ -39,7 +46,7 @@ active proctype fin(chan obs) {
     fi
 }
 
-active proctype observateur(chan obs){
+active proctype observateur(){
     bool clignote = false;
     mtype ancienne = Indetermine;
     mtype coul = Indetermine;
@@ -53,14 +60,14 @@ active proctype observateur(chan obs){
     :: coul == Orange -> assert(ancienne!=Rouge);
     fi
     */
-    :: coul == Vert -> assert(ancienne!=Orange);
-    :: coul == Rouge -> assert(ancienne!=Vert);
-    :: coul == Orange -> assert(ancienne!=Rouge);
+    if
+    :: clignote == false ->
+        if
+        :: coul == Vert -> assert(ancienne!=Orange); ancienne = Vert;
+        :: coul == Rouge -> assert(ancienne!=Vert); ancienne = Rouge;
+        :: coul == Orange -> assert(ancienne!=Rouge); ancienne = Orange;
+        fi
+    //:: clignote == true -> break
+    fi
     od
-}
-
-init {
-    chan obs = [0] of {mtype, int};
-    run fin(obs);
-    run observateur(obs);
 }
