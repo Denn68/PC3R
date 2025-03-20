@@ -28,14 +28,27 @@ type FilmPreviews struct {
     NbRate      int     `json:"nb_rate"`
 }
 
-"""
+// Structure pour une note
+type Rate struct {
+	Username string `json:"username"` 
+	FilmTitle int `json:"film_title"` 
+	Rating int `json:"rating"` 
+	Notice string `json:"notice"` 
+	RatedAt time.Time `json:"rated_at"`
+}
+
 // Structure pour stocker un film
 type Film struct {
-	ID       int
-	Title    string
-	Overview string
+	Id          int  `json:"id"` 
+    Title       string  `json:"title"`
+    ReleaseDate string  `json:"release_date"`
+    Poster      []byte  `json:"poster"`
+    AverageRate float64 `json:"average_rate"`
+    NbRate      int     `json:"nb_rate"`
+	Categories []string  `json:"categories"`
+	Overview string `json:"overview"`
+	Rates []Rate `json:"rates"`
 }
-"""
 
 // Fonction pour établir la connexion à la base de données
 func connectToDB() (*sql.DB, error) {
@@ -191,39 +204,99 @@ func getFilmsByCategories(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func getFilmByIdFromDB(db *sql.DB, categoryId int) ([]FilmPreviews, error) {
+func getFilmByIdFromDB(db *sql.DB, filmId int) ([]FilmPreviews, error) {
 	
-	// Requête SQL pour récupérer les id de films par catégories
-	rows, err := db.Query("SELECT film_id FROM film_categories WHERE category_id = $1", categoryId)
+	var film Film
+	var posterPath string
+
+    query := `SELECT film_id, title, overview, release_date, poster_path, average_rate, nb_rate 
+              FROM films WHERE film_id = $1`
+
+		
+    err := db.QueryRow(query, filmID).Scan(&film.ID, &film.Title, &film.Overview, 
+                                           &film.ReleaseDate, &posterPath, 
+                                           &film.AverageRate, &film.NbRate)
+    if err != nil {
+        if err == sql.ErrNoRows {
+            return nil, fmt.Errorf("Aucun film trouvé avec l'ID %d", filmID)
+        }
+        return nil, err
+    }
+
+	var posterPath string
+	// Récupérer les infos du film
+	var film FilmPreviews
+	err := db.QueryRow("SELECT film_id, title, release_date, poster_path, average_rate, nb_rate FROM films WHERE film_id = $1", filmId).
+		Scan(&film.Id, &film.Title, &film.ReleaseDate, &posterPath, &film.AverageRate, &film.NbRate)
+	if err != nil {
+		return nil, err
+	}
+
+	// Télécharger le poster
+	film.Poster, err = fetchPoster(posterPath)
+	if err != nil {
+		return nil, err
+	}
+
+	// Requête SQL pour récupérer les id de catégories du film
+	rows, err := db.Query("SELECT category_id FROM film_categories WHERE film_id = $1", filmId)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
-	var filmsPreviews []FilmPreviews
+	// Récuperer les catégories
+	var categories []Category
 	for rows.Next() {
-		var filmId int
-		if err := rows.Scan(&filmId); err != nil {
+		var categoryId int
+		if err := rows.Scan(&categoryId); err != nil {
 			return nil, err
 		}
 
-		var posterPath string
-		// Récupérer les infos du film
-		var film FilmPreviews
-		err := db.QueryRow("SELECT film_id, title, release_date, poster_path, average_rate, nb_rate FROM films WHERE film_id = $1", filmId).
-			Scan(&film.Id, &film.Title, &film.ReleaseDate, &posterPath, &film.AverageRate, &film.NbRate)
+		// Récupérer les infos de la catégorie
+		var category Category
+		err := db.QueryRow("SELECT id, name FROM categories WHERE category_id = $1", categoryId).
+			Scan(&category.Id, &category.Name)
 		if err != nil {
 			return nil, err
 		}
-
-		// Télécharger le poster
-		film.Poster, err = fetchPoster(posterPath)
-		if err != nil {
-			return nil, err
-		}
-
-		filmsPreviews = append(filmsPreviews, film)
+		
+		categories = append(categories, category)
 	}
+
+	film.Categories = categories
+
+	
+	// Requête SQL pour récupérer les avis sur le films
+	rows, err := db.Query("SELECT user_id, rating, rated_at, notice FROM ratings WHERE film_id = $1", filmId)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	// TODO: Récuperer les notes
+	// Récuperer les notes
+	var ratings []Rate
+
+	// Récuperer les catégories
+	var categories []Category
+	for rows.Next() {
+		var categoryId int
+		if err := rows.Scan(&categoryId); err != nil {
+			return nil, err
+		}
+
+		// Récupérer les infos de la catégorie
+		var category Category
+		err := db.QueryRow("SELECT id, name FROM categories WHERE category_id = $1", categoryId).
+			Scan(&category.Id, &category.Name)
+		if err != nil {
+			return nil, err
+		}
+		
+		categories = append(categories, category)
+	}
+
 	return filmsPreviews, nil
 }
 
