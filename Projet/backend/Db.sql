@@ -32,6 +32,7 @@ CREATE TABLE IF NOT EXISTS ratings (
     film_id INT,
     rating INT CHECK(rating >= 1 AND rating <= 10),
     rated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    notice TEXT,
     PRIMARY KEY (user_id, film_id),
     FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE,
     FOREIGN KEY (film_id) REFERENCES films(film_id) ON DELETE CASCADE
