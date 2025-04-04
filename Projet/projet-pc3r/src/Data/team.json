@@ -1,0 +1,14 @@
+{
+  "team": [
+    {
+      "name": "Denn",
+      "role": "Backend Developer",
+      "image_src": "https://cdn-icons-png.flaticon.com/512/2202/2202112.png"
+    },
+    {
+      "name": "Moufees",
+      "role": "Frontend Developer",
+      "image_src": "https://cdn-icons-png.flaticon.com/512/2202/2202112.png"
+    }
+  ]
+}

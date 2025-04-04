@@ -1,0 +1,99 @@
+/* Navbar.css */
+
+/* Style global pour le nav */
+.navbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem;
+    background-color: #e5e7eb;
+    /* bg-neutral-200 */
+    color: #6b7280;
+    /* text-neutral-500 */
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* shadow-lg */
+}
+
+.navbar-dark {
+    background-color: #4b5563;
+    /* dark:bg-neutral-600 */
+}
+
+.navbar a {
+    display: flex;
+    align-items: center;
+    text-decoration: none;
+    transition: color 0.3s;
+}
+
+.navbar a:hover {
+    color: #4b5563;
+    /* hover:text-neutral-700 */
+}
+
+.navbar .brand-text {
+    font-size: 1rem;
+    padding-left: 0.25rem;
+    color: #6b7280;
+    /* text-neutral-500 */
+}
+
+.navbar .brand-text:hover {
+    color: #4b5563;
+    /* hover:text-neutral-700 */
+}
+
+/* Liste des éléments de navigation */
+.nav-list {
+    display: flex;
+    justify-content: center;
+    list-style-type: none;
+    padding: 0;
+}
+
+.nav-item {
+    margin: 0 1rem;
+    /* mx-4 */
+}
+
+.nav-item a {
+    color: #6b7280;
+    text-decoration: none;
+    transition: color 0.3s, text-decoration 0.3s;
+}
+
+.nav-item a:hover {
+    color: #4b5563;
+    /* hover:text-neutral-700 */
+    text-decoration: underline;
+    /* hover:underline */
+}
+
+.active-nav-link {
+    font-weight: bold;
+    /* active-nav-link */
+    color: #4b5563;
+    /* Couleur de l'élément actif */
+}
+
+/* Bouton utilisateur */
+.user-btn {
+    background-color: transparent;
+    border: 1px solid #6b7280;
+    border-radius: 0.375rem;
+    /* rounded */
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+    /* text-xs */
+    color: #6b7280;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.user-btn:hover {
+    background-color: #f3f4f6;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    /* hover:shadow-lg */
+    color: #4b5563;
+    /* hover:text-neutral-500 */
+}

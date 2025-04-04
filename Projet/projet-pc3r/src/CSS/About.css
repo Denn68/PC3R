@@ -1,0 +1,38 @@
+/* About.css */
+
+.about-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 20px 0;
+    /* py-5 */
+    text-align: center;
+}
+
+.about-text {
+    padding: 20px 0;
+    /* py-5 */
+}
+
+.about-image {
+    height: 400px;
+    width: 500px;
+}
+
+.about-link {
+    font-style: italic;
+    text-decoration: underline;
+    font-weight: 100;
+    /* font-thin */
+    color: #007bff;
+    transition: color 0.3s;
+}
+
+.about-link:hover {
+    color: #0056b3;
+}
+
+.about-spacing {
+    height: 96px;
+    /* h-24 */
+}

@@ -1,0 +1,42 @@
+/* Member.css */
+
+.member-card {
+    max-width: 18rem;
+    border-radius: 8px;
+    background-color: #e5e7eb;
+    /* bg-gray-200 */
+    box-shadow: 0 2px 15px -3px rgba(0, 0, 0, 0.2),
+        0 10px 20px -2px rgba(0, 0, 0, 0.2);
+    overflow: hidden;
+}
+
+.member-image {
+    width: 100%;
+    height: 18rem;
+    /* h-72 */
+    object-fit: cover;
+    border-top-left-radius: 8px;
+    border-top-right-radius: 8px;
+}
+
+.member-info {
+    padding: 24px;
+    /* p-6 */
+    text-align: center;
+}
+
+.member-name {
+    font-size: 1.25rem;
+    /* text-xl */
+    font-weight: 600;
+    /* font-semibold */
+    color: #374151;
+    /* text-neutral-700 */
+}
+
+.member-role {
+    font-size: 1rem;
+    /* text-base */
+    color: #4b5563;
+    /* text-neutral-600 */
+}
