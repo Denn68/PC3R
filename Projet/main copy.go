@@ -1,4 +1,4 @@
-package main
+/* package main
 
 import (
 	"database/sql"
@@ -21,7 +21,7 @@ type Category struct {
 }
 
 type FilmPreviews struct {
-    Id          int  `json:"id"` 
+    Id          int  `json:"id"`
     Title       string  `json:"title"`
     ReleaseDate string  `json:"release_date"`
     Poster      []byte  `json:"poster"`
@@ -224,3 +224,4 @@ func main() {
 		log.Fatal("Erreur lors du démarrage du serveur : ", err)
 	}
 }
+*/

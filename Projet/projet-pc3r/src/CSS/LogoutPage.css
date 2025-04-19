@@ -1,0 +1,50 @@
+.logout-page {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    background-color: #f9f9f9;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    max-width: 400px;
+    margin: 4rem auto;
+}
+
+.logout-page h2 {
+    font-size: 2rem;
+    margin-bottom: 1.5rem;
+    color: #333;
+}
+
+.logout-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #efb944;
+    /* rouge */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.logout-btn:hover {
+    background-color: #dca226;
+}
+
+.delete-btn {
+    padding: 0.75rem 1.5rem;
+    background-color: #ef4444;
+    /* rouge */
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: background-color 0.2s ease-in-out;
+}
+
+.delete-btn:hover {
+    background-color: #dc2626;
+}

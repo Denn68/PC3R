@@ -1,0 +1,52 @@
+.film-detail-container {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+@media (min-width: 768px) {
+    .film-detail-container {
+        flex-direction: row;
+    }
+}
+
+.poster {
+    flex-shrink: 0;
+    width: 100%;
+    max-width: 300px;
+}
+
+.poster-img {
+    width: 100%;
+    height: auto;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.film-info {
+    flex: 1;
+}
+
+.film-title {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: #111827;
+}
+
+.film-date,
+.film-runtime,
+.film-genres {
+    font-size: 1rem;
+    margin-bottom: 0.5rem;
+    color: #374151;
+}
+
+.film-overview {
+    font-size: 1rem;
+    margin-top: 1rem;
+    color: #1f2937;
+    line-height: 1.5;
+}

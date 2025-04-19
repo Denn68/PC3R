@@ -30,6 +30,16 @@
   color: #61dafb;
 }
 
+.app-container {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+}
+
 @keyframes App-logo-spin {
   from {
     transform: rotate(0deg);
@@ -46,3 +56,8 @@
 @import "./CSS/About.css";
 @import "./CSS/Member.css";
 @import "./CSS/Team.css";
+@import "./CSS/PageSelector.css";
+@import "./CSS/Categories.css";
+@import "./CSS/FilmDetail.css";
+@import "./CSS/LoginPage.css";
+@import "./CSS/LogoutPage.css";
