@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React from "react";
 import { NavLink } from "react-router-dom";
 import SearchBar from "./SearchBar";
 import { useAuth } from "./context/AuthContext";
@@ -26,7 +26,6 @@ const Navbar: React.FC = () => {
           <li className="nav-item">
             <SearchBar />
           </li>
-
 
           <li className="nav-item">
             <NavLink to="/itineraires" className={navBarActiveFunc}>

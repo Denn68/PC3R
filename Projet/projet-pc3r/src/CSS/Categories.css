@@ -59,6 +59,11 @@
     text-align: center;
 }
 
+.film-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.2);
+}
+
 .film-poster {
     width: 100%;
     height: auto;

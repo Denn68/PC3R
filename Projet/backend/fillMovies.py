@@ -39,10 +39,7 @@ def get_all_popular_movies(api_key):
         if response.status_code == 200:
             data = response.json()
             all_movies.extend(data['results'])  # Ajouter les films de cette page à la liste
-            
-            # Vérifier si nous avons atteint la dernière page
-            if page >= 10:  # Limité à 10 pages (par exemple)
-                break
+            print(f"Page {page} : {len(data['results'])} films récupérés.")
             page += 1
         else:
             print(f"Erreur: {response.status_code}")
@@ -54,94 +51,94 @@ def get_all_popular_movies(api_key):
 def insert_categories_to_db(categories):
     connection = None
     try:
-        # Connexion à la base de données PostgreSQL
         connection = psycopg2.connect(**db_config)
         cursor = connection.cursor()
 
-        # Insérer les catégories dans la table categories
-        insert_category_query = """
-            INSERT INTO categories (id, name)
-            VALUES (%s, %s)
-            ON CONFLICT (id) DO NOTHING;
-        """
-        
         for category in categories:
-            category_data = (category['id'], category['name'])
-            cursor.execute(insert_category_query, category_data)
-        
+            # Vérifie si la catégorie existe déjà
+            check_query = "SELECT 1 FROM categories WHERE id = %s;"
+            cursor.execute(check_query, (category['id'],))
+            exists = cursor.fetchone()
+
+            if exists:
+                print(f"Catégorie '{category['name']}' déjà présente. Insertion ignorée.")
+                continue
+
+            # Insertion si elle n'existe pas
+            insert_query = "INSERT INTO categories (id, name) VALUES (%s, %s);"
+            cursor.execute(insert_query, (category['id'], category['name']))
+            print(f"Catégorie '{category['name']}' insérée.")
+
         connection.commit()
         print("Catégories insérées dans la base de données.\n")
-    
-    except Error as e:
+
+    except Exception as e:
         print(f"Erreur lors de l'insertion dans la base de données : {e}")
-    
+
     finally:
         if connection:
             cursor.close()
             connection.close()
+
 
 # Fonction pour insérer un film dans la base de données
 def insert_movie_to_db(movie):
     connection = None
     try:
         print("Insertion film\n")
-        # Connexion à la base de données PostgreSQL
         connection = psycopg2.connect(**db_config)
         cursor = connection.cursor()
 
-        # Insérer le film dans la table films et récupérer l'id
+        # Vérifier si le film existe déjà dans la base de données (par titre)
+        check_query = "SELECT id FROM films WHERE title = %s;"
+        cursor.execute(check_query, (movie['title'],))
+        existing = cursor.fetchone()
+
+        if existing:
+            print(f"Le film '{movie['title']}' existe déjà dans la base. Insertion annulée.\n")
+            return  # Le film existe déjà, on ne fait rien
+
+        # Insertion du film
         insert_movie_query = """
-            INSERT INTO films (title, overview, release_date, poster_path, average_rate, vote_count)
+            INSERT INTO films (title, overview, release_date, poster_path, average_rate, nb_rate)
             VALUES (%s, %s, %s, %s, %s, %s)
-            ON CONFLICT (title) DO NOTHING
             RETURNING id;
         """
-
         movie_data = (
             movie['title'], 
             movie['overview'], 
             movie['release_date'], 
             movie['poster_path'],
-            movie.get('vote_average', 0),
-            movie.get('vote_count', 0)
+            0,
+            0
         )
-
         cursor.execute(insert_movie_query, movie_data)
-        movie_id = cursor.fetchone()
-
-        if movie_id:
-            movie_id = movie_id[0]  # L'ID généré
-        else:
-            # Le film existait déjà, on le récupère avec une requête SELECT
-            cursor.execute("SELECT id FROM films WHERE title = %s;", (movie['title'],))
-            movie_id = cursor.fetchone()[0]
-
+        movie_id = cursor.fetchone()[0]
         connection.commit()
-        
+
         print("Insertion avec catégorie.\n")
 
-        # Insérer les catégories dans la table film_categories
-        # Récupérer les genres à partir de l'API
+        # Lier aux catégories existantes
         genre_ids = movie.get('genre_ids', [])
         for genre_id in genre_ids:
-            # Insérer dans film_categories (on suppose que les catégories existent déjà dans ta DB)
             insert_category_query = """
                 INSERT INTO film_categories (film_id, category_id)
                 SELECT %s, %s
                 WHERE EXISTS (SELECT 1 FROM categories WHERE id = %s);
             """
             cursor.execute(insert_category_query, (movie_id, genre_id, genre_id))
-        
+
         connection.commit()
         print(f"Film '{movie['title']}' inséré dans la base de données.\n")
-    
-    except Error as e:
+
+    except Exception as e:
         print(f"Erreur lors de l'insertion dans la base de données : {e}")
-    
+
     finally:
         if connection:
             cursor.close()
             connection.close()
+
             
 # Récupérer toutes les catégories de films
 categories = get_all_categories(api_key)

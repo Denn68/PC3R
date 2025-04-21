@@ -1,10 +1,9 @@
-import React, { useState, useEffect, use } from "react";
+import React, { useState, useEffect } from "react";
 import PageSelector from "./../subComponents/PageSelector";
 
 interface Category {
   id: number;
   name: string;
-  // ajoute d'autres champs ici si besoin
 }
 
 interface Film {
@@ -15,11 +14,12 @@ interface Film {
   average_rate: number;
 }
 
-
 export default function Categories() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [films, setFilms] = useState<Film[]>([]);
+  const [pageNumber, setPageNumber] = useState<number>(1);
+  const [nbPages, setNbPages] = useState<number>(1);
 
   useEffect(() => {
     fetch("http://localhost:8080/categories")
@@ -33,30 +33,35 @@ export default function Categories() {
 
   useEffect(() => {
     if (selectedCategory) {
-      fetch(`http://localhost:8080/categories/getFilms?category_id=${selectedCategory.id}`)
+      fetch(`http://localhost:8080/categories/getFilms?category_id=${selectedCategory.id}&page=${pageNumber}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("Films récupérés :", data);
-          setFilms(data);
+          setFilms(data.films);
+          setNbPages(data.nbPages);
         })
         .catch((err) => console.error("Erreur lors de la récupération des films :", err));
     }
-  }, [selectedCategory]);
+  }, [selectedCategory, pageNumber]);
 
   const handleCategoryClick = (category: Category) => {
     setSelectedCategory(category);
+    setPageNumber(1); // Reset page to 1 on category change
   };
 
   return (
     <div className="categories-container">
       <div className="content">
         <h1>Catégories</h1>
-        {/* Tu peux ajouter d'autres contenus ici */}
       </div>
 
       <div className="categories-list">
         {categories.map((category) => (
-          <div key={category.id} className={selectedCategory?.id === category.id ? "category-item-selected" : "category-item"} onClick={() => handleCategoryClick(category)}>
+          <div
+            key={category.id}
+            className={selectedCategory?.id === category.id ? "category-item-selected" : "category-item"}
+            onClick={() => handleCategoryClick(category)}
+          >
             {category.name}
           </div>
         ))}
@@ -64,7 +69,7 @@ export default function Categories() {
 
       <div className="films-list">
         {films.map((film) => (
-          <div key={film.id} className="film-card">
+          <div key={film.id} className="film-card" onClick={() => window.location.href = `/film/${film.id}`}>
             <img src={"data:image/jpeg;base64," + film.poster} alt={film.title} className="film-poster" />
             <h3>{film.title}</h3>
             <p>Sortie : {new Date(film.release_date).toLocaleDateString("fr-FR")}</p>
@@ -73,6 +78,13 @@ export default function Categories() {
         ))}
       </div>
 
+      {selectedCategory && nbPages > 1 && (
+        <PageSelector
+          pageNumber={pageNumber}
+          setPageNumber={setPageNumber}
+          nbPages={nbPages}
+        />
+      )}
     </div>
   );
 }

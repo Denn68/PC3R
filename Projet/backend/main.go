@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"time"
@@ -128,35 +129,55 @@ func getCategories(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(categories)
 }
 
-func getFilmsByCategoriesFromDB(db *sql.DB, categoryId int) ([]FilmPreviews, error) {
-	rows, err := db.Query("SELECT film_id FROM film_categories WHERE category_id = $1", categoryId)
+func getFilmsByCategoriesFromDB(db *sql.DB, categoryId int, pageNumber int) ([]FilmPreviews, int, error) {
+	const pageSize = 20
+	offset := (pageNumber - 1) * pageSize
+
+	// Compter le nombre total de films pour calculer le nombre de pages
+	var totalFilms int
+	err := db.QueryRow(`
+		SELECT COUNT(*) 
+		FROM film_categories 
+		WHERE category_id = $1
+	`, categoryId).Scan(&totalFilms)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
+	}
+	nbPages := int(math.Ceil(float64(totalFilms) / float64(pageSize)))
+
+	// Récupérer les films avec pagination
+	rows, err := db.Query(`
+		SELECT f.id, f.title, f.release_date, f.poster_path, f.average_rate, f.nb_rate
+		FROM films f
+		JOIN film_categories fc ON f.id = fc.film_id
+		WHERE fc.category_id = $1
+		ORDER BY f.release_date DESC
+		LIMIT $2 OFFSET $3
+	`, categoryId, pageSize, offset)
+	if err != nil {
+		return nil, 0, err
 	}
 	defer rows.Close()
 
 	var films []FilmPreviews
 	for rows.Next() {
-		var filmId int
-		if err := rows.Scan(&filmId); err != nil {
-			return nil, err
-		}
-
 		var film FilmPreviews
 		var posterPath string
-		err := db.QueryRow("SELECT id, title, release_date, poster_path, average_rate, nb_rate FROM films WHERE id = $1", filmId).
-			Scan(&film.Id, &film.Title, &film.ReleaseDate, &posterPath, &film.AverageRate, &film.NbRate)
+
+		err := rows.Scan(&film.Id, &film.Title, &film.ReleaseDate, &posterPath, &film.AverageRate, &film.NbRate)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
 
 		film.Poster, err = fetchPoster(posterPath)
 		if err != nil {
-			return nil, err
+			return nil, 0, err
 		}
+
 		films = append(films, film)
 	}
-	return films, nil
+
+	return films, nbPages, nil
 }
 
 func getFilmsByCategories(w http.ResponseWriter, r *http.Request) {
@@ -167,14 +188,33 @@ func getFilmsByCategories(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	films, err := getFilmsByCategoriesFromDB(db, id)
+	pageStr := r.URL.Query().Get("page")
+	if pageStr == "" {
+		http.Error(w, "Paramètre 'page' manquant", http.StatusBadRequest)
+		return
+	}
+	page, err := strconv.Atoi(pageStr)
+	if err != nil {
+		http.Error(w, "Paramètre 'page' invalide", http.StatusBadRequest)
+		return
+	}
+
+	films, nbPages, err := getFilmsByCategoriesFromDB(db, id, page)
 	if err != nil {
 		http.Error(w, "Erreur lors de la récupération des films", http.StatusInternalServerError)
 		return
 	}
 
+	response := struct {
+		Films   []FilmPreviews `json:"films"`
+		NbPages int            `json:"nbPages"`
+	}{
+		Films:   films,
+		NbPages: nbPages,
+	}
+
 	w.Header().Set("Content-Type", "application/json")
-	json.NewEncoder(w).Encode(films)
+	json.NewEncoder(w).Encode(response)
 }
 
 func getFilmByIdFromDB(db *sql.DB, filmId int) (*Film, error) {
@@ -215,10 +255,19 @@ func getFilmByIdFromDB(db *sql.DB, filmId int) (*Film, error) {
 
 	for ratingsRows.Next() {
 		var r Rate
-		if err := ratingsRows.Scan(&r.Username, &r.Rating, &r.RatedAt, &r.Notice); err != nil {
+		var notice sql.NullString
+
+		if err := ratingsRows.Scan(&r.Username, &r.Rating, &r.RatedAt, &notice); err != nil {
 			return nil, err
 		}
 		r.FilmID = filmId
+
+		if notice.Valid {
+			r.Notice = notice.String
+		} else {
+			r.Notice = ""
+		}
+
 		film.Rates = append(film.Rates, r)
 	}
 
@@ -280,6 +329,173 @@ func getFilmByText(w http.ResponseWriter, r *http.Request) {
 
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(films)
+}
+
+func rateFilmFromDB(db *sql.DB, filmId int, username string, rating int) error {
+	// Récupérer l'ID de l'utilisateur
+	var userId string
+	err := db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return fmt.Errorf("utilisateur non trouvé")
+		}
+		return err
+	}
+
+	// Insérer la nouvelle note dans ratings
+	_, err = db.Exec(`
+		INSERT INTO ratings (user_id, film_id, rating)
+		VALUES ($1, $2, $3)
+	`, userId, filmId, rating)
+	if err != nil {
+		return fmt.Errorf("erreur lors de l'insertion de la note : %v", err)
+	}
+
+	// Mettre à jour average_rate et nb_rate dans films
+	_, err = db.Exec(`
+		UPDATE films
+		SET 
+			average_rate = ROUND(((average_rate * nb_rate + $1) / (nb_rate + 1))::numeric, 1),
+			nb_rate = nb_rate + 1
+		WHERE id = $2
+	`, rating, filmId)
+	if err != nil {
+		return fmt.Errorf("erreur lors de la mise à jour du film : %v", err)
+	}
+
+	return nil
+}
+
+func rateFilm(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Rate film")
+	filmIdStr := r.URL.Query().Get("film_id")
+	filmId, err := strconv.Atoi(filmIdStr)
+	if err != nil {
+		http.Error(w, "Paramètre 'film_id' invalide", http.StatusBadRequest)
+		return
+	}
+
+	usernameStr := r.URL.Query().Get("username")
+	if usernameStr == "" {
+		http.Error(w, "Paramètre 'username' manquant", http.StatusBadRequest)
+		return
+	}
+
+	ratingStr := r.URL.Query().Get("rating")
+	rating, err := strconv.Atoi(ratingStr)
+	if err != nil {
+		http.Error(w, "Paramètre 'rating' invalide", http.StatusBadRequest)
+		return
+	}
+
+	err = rateFilmFromDB(db, filmId, usernameStr, rating)
+	if err != nil {
+		http.Error(w, "Erreur lors de la notation du film", http.StatusInternalServerError)
+		log.Println("Erreur lors de la notation du film:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+	json.NewEncoder(w).Encode("Film noté avec succès")
+}
+
+func checkIfRatedFromDB(db *sql.DB, filmId int, username string) (bool, error) {
+	var userId string
+	err := db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return false, fmt.Errorf("utilisateur non trouvé")
+		}
+		return false, err
+	}
+
+	var rated bool
+	err = db.QueryRow("SELECT EXISTS(SELECT 1 FROM ratings WHERE film_id = $1 AND user_id = $2)", filmId, userId).Scan(&rated)
+	if err != nil {
+		return false, err
+	}
+
+	return rated, nil
+}
+
+func checkIfRated(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Vérification si le film a été noté")
+	filmIdStr := r.URL.Query().Get("film_id")
+	filmId, err := strconv.Atoi(filmIdStr)
+	if err != nil {
+		http.Error(w, "Paramètre 'film_id' invalide", http.StatusBadRequest)
+		return
+	}
+
+	usernameStr := r.URL.Query().Get("username")
+	if usernameStr == "" {
+		http.Error(w, "Paramètre 'username' manquant", http.StatusBadRequest)
+		return
+	}
+
+	rated, err := checkIfRatedFromDB(db, filmId, usernameStr)
+	if err != nil {
+		http.Error(w, "Erreur lors de la vérification de la note", http.StatusInternalServerError)
+		log.Println("Erreur lors de la vérification de la note:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(rated)
+}
+
+func getRatingFromDB(db *sql.DB, filmId int, username string) (int, bool, error) {
+	var userId string
+	err := db.QueryRow("SELECT id FROM users WHERE username = $1", username).Scan(&userId)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+
+	var rating int
+	err = db.QueryRow("SELECT rating FROM ratings WHERE film_id = $1 AND user_id = $2", filmId, userId).Scan(&rating)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, false, nil
+		}
+		return 0, false, err
+	}
+
+	return rating, true, nil
+}
+
+func getRating(w http.ResponseWriter, r *http.Request) {
+	fmt.Println("Récupération de la note")
+	filmIdStr := r.URL.Query().Get("film_id")
+	filmId, err := strconv.Atoi(filmIdStr)
+	if err != nil {
+		http.Error(w, "Paramètre 'film_id' invalide", http.StatusBadRequest)
+		return
+	}
+
+	usernameStr := r.URL.Query().Get("username")
+	if usernameStr == "" {
+		http.Error(w, "Paramètre 'username' manquant", http.StatusBadRequest)
+		return
+	}
+
+	rating, found, err := getRatingFromDB(db, filmId, usernameStr)
+	if err != nil {
+		http.Error(w, "Erreur lors de la récupération de la note", http.StatusInternalServerError)
+		log.Println("Erreur lors de la récupération de la note:", err)
+		return
+	}
+
+	w.Header().Set("Content-Type", "application/json")
+	if !found {
+		// Tu peux aussi envoyer null à la place de 0 si tu préfères
+		w.Write([]byte("null"))
+		return
+	}
+	json.NewEncoder(w).Encode(rating)
 }
 
 func getAccountFromDB(db *sql.DB, username string, password string) (string, error) {
@@ -514,8 +730,11 @@ func main() {
 
 	http.HandleFunc("/categories", enableCors(getCategories))
 	http.HandleFunc("/categories/getFilms", enableCors(getFilmsByCategories))
-	http.HandleFunc("/films/getById", enableCors(getFilmById))     // corrigé
-	http.HandleFunc("/films/getByText", enableCors(getFilmByText)) // corrigé
+	http.HandleFunc("/films/getById", enableCors(getFilmById))
+	http.HandleFunc("/films/getByText", enableCors(getFilmByText))
+	http.HandleFunc("/films/rate", enableCors(rateFilm))
+	http.HandleFunc("/films/checkIfRated", enableCors(checkIfRated))
+	http.HandleFunc("/films/getRating", enableCors(getRating))
 
 	// Définir les routes pour user
 	http.HandleFunc("/users/getAccount", enableCors(getAccount))       // Route pour récuperer un compte
