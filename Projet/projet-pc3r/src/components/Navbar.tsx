@@ -26,20 +26,14 @@ const Navbar: React.FC = () => {
           <li className="nav-item">
             <SearchBar />
           </li>
-
-          <li className="nav-item">
-            <NavLink to="/itineraires" className={navBarActiveFunc}>
-              Itinéraires
-            </NavLink>
-          </li>
           <li className="nav-item">
             <NavLink to="/categories" className={navBarActiveFunc}>
               Catégories
             </NavLink>
           </li>
           <li className="nav-item">
-            <NavLink to="/points_interet" className={navBarActiveFunc}>
-              Points d'intérêt
+            <NavLink to="/alphabetic" className={navBarActiveFunc}>
+              Par ordre alphabétique
             </NavLink>
           </li>
         </ul>
@@ -49,7 +43,7 @@ const Navbar: React.FC = () => {
 
         <button className="user-btn">
           <NavLink to={username ? "/logout" : "/login"}>
-            <span className="user-name">{username || "Connexion"}</span>
+            <span className="user-name">{username || "Connexion | Inscription"}</span>
             <i className="fa-solid fa-user-ninja"></i>
           </NavLink>
         </button>

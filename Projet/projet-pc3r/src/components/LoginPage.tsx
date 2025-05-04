@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "./context/AuthContext";
 
+
 const LoginPage: React.FC = () => {
     const [username, setUsername] = useState("");
     const [password, setPassword] = useState("");
@@ -19,13 +20,14 @@ const LoginPage: React.FC = () => {
         fetch(`http://localhost:8080/users/getAccount?username=${username}&password=${password}`)
             .then((res) => res.json())
             .then((data) => {
-                if (!data) {
-                    alert("Nom d'utilisateur ou mot de passe incorrect !");
+                console.log("Données récupérées :", data);
+                if (data.id == "") {
+                    alert(data.messageError);
                     return;
                 } else {
                     alert("Connexion réussie !");
-                    localStorage.setItem("id", data);
-                    login(username); // 👈 mise à jour du contexte
+                    localStorage.setItem("id", data.id);
+                    login(username);
                     navigate("/");
                 }
             })
@@ -55,7 +57,7 @@ const LoginPage: React.FC = () => {
             if (dataCreate) {
                 alert("Inscription réussie !");
                 localStorage.setItem("id", dataCreate);
-                login(username); // 👈 mise à jour du contexte
+                login(username);
                 navigate("/");
             }
         } catch (err) {

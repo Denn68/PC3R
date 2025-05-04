@@ -15,6 +15,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const login = (username: string) => {
         localStorage.setItem("username", username);
         setUsername(username);
+        console.log("Données récupérées :");
     };
 
     const logout = () => {

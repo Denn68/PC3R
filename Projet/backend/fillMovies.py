@@ -1,16 +1,17 @@
 import requests
 import psycopg2
 from psycopg2 import Error
+from datetime import datetime
 
 # Ta clé API TMDb
 api_key = "7b69381946b3a49fc73a1da79e332a9f"
 
 # Informations de connexion à ta base de données PostgreSQL
 db_config = {
-    'host': 'localhost',  # Adresse de ton serveur PostgreSQL
-    'user': 'postgres',   # Utilisateur PostgreSQL
-    'password': 'pc3rfilms',  # Ton mot de passe PostgreSQL
-    'database': 'filmdb'  # Le nom de ta base de données
+    'host': 'dpg-d0bt4imuk2gs7384e86g-a.frankfurt-postgres.render.com',
+    'user': 'filmdb_1s5v_user',
+    'password': 'MI2FmSsc1zWuyfGEmJEmf8fE69S3tNpp',
+    'database': 'filmdb_1s5v'
 }
 
 # Fonction pour récupérer les catégories de films
@@ -29,22 +30,33 @@ def get_all_categories(api_key):
 def get_all_popular_movies(api_key):
     all_movies = []
     page = 1
+    today = datetime.today().date()
+
     while True:
-        # URL de la requête pour les films populaires
         url = f"https://api.themoviedb.org/3/movie/popular?api_key={api_key}&page={page}"
-        
-        # Faire la requête HTTP
         response = requests.get(url)
-        
+
         if response.status_code == 200:
             data = response.json()
-            all_movies.extend(data['results'])  # Ajouter les films de cette page à la liste
-            print(f"Page {page} : {len(data['results'])} films récupérés.")
+            results = data['results']
+
+            # Filtrer pour ne garder que les films déjà sortis
+            released_movies = [
+                movie for movie in results
+                if movie.get('release_date') and datetime.strptime(movie['release_date'], '%Y-%m-%d').date() <= today
+            ]
+
+            all_movies.extend(released_movies)
+            #print(f"Page {page} : {len(released_movies)} films sortis récupérés.")
+            
+            # Fin de pagination
+            if page >= data.get('total_pages', 1):
+                break
             page += 1
         else:
             print(f"Erreur: {response.status_code}")
             break
-            
+
     return all_movies
 
 # Fonction pour insérer les catégories dans la base de données
@@ -85,7 +97,7 @@ def insert_categories_to_db(categories):
 def insert_movie_to_db(movie):
     connection = None
     try:
-        print("Insertion film\n")
+        #print("Insertion film\n")
         connection = psycopg2.connect(**db_config)
         cursor = connection.cursor()
 
@@ -116,7 +128,7 @@ def insert_movie_to_db(movie):
         movie_id = cursor.fetchone()[0]
         connection.commit()
 
-        print("Insertion avec catégorie.\n")
+        #print("Insertion avec catégorie.\n")
 
         # Lier aux catégories existantes
         genre_ids = movie.get('genre_ids', [])
@@ -129,7 +141,7 @@ def insert_movie_to_db(movie):
             cursor.execute(insert_category_query, (movie_id, genre_id, genre_id))
 
         connection.commit()
-        print(f"Film '{movie['title']}' inséré dans la base de données.\n")
+        #print(f"Film '{movie['title']}' inséré dans la base de données.\n")
 
     except Exception as e:
         print(f"Erreur lors de l'insertion dans la base de données : {e}")
@@ -151,13 +163,15 @@ for category in categories:
 # Récupérer tous les films populaires
 movies = get_all_popular_movies(api_key)
 
+print(f"Nombre total de films récupérés : {len(movies)}")
+
 # Afficher les titres des films récupérés et les insérer dans la base de données
 for movie in movies:
-    print(f"Title: {movie['title']}")
-    print(f"Overview: {movie['overview']}")
-    print(f"Release Date: {movie['release_date']}")
-    print('-' * 50)
-    print(f"Vote : {movie.get('vote_average', 0)}")
+    #print(f"Title: {movie['title']}")
+    #print(f"Overview: {movie['overview']}")
+    #print(f"Release Date: {movie['release_date']}")
+    #print('-' * 50)
+    #print(f"Vote : {movie.get('vote_average', 0)}")
 
     # Insérer le film dans la base de données
     insert_movie_to_db(movie)

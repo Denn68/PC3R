@@ -24,26 +24,27 @@ const SearchBar: React.FC = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    // http://localhost:8080/films/getByText?textInput=
-
-    fetch(`http://localhost:8080/films/getByText?textInput=${value}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log("Données récupérées :", data);
-        setFilteredSuggestions(data.map(
-          (film: FilmSuggestion) => ({
-            id: film.id,
-            title: film.title,
-            release_date: film.release_date,
-          }))
-        );
-      })
-      .catch((err) => console.error("Erreur lors de la récupération :", err));
-    setSearchTerm(value);
 
     if (value.length === 0) {
       setFilteredSuggestions([]);
+      setSearchTerm(value);
       return;
+    }
+    else {
+      fetch(`http://localhost:8080/films/getByText?textInput=${value}`)
+        .then((res) => res.json())
+        .then((data) => {
+          console.log("Données récupérées :", data);
+          setFilteredSuggestions(data.map(
+            (film: FilmSuggestion) => ({
+              id: film.id,
+              title: film.title,
+              release_date: film.release_date,
+            }))
+          );
+        })
+        .catch((err) => console.error("Erreur lors de la récupération :", err));
+      setSearchTerm(value);
     }
     const filtered = filteredSuggestions.filter((suggestion) =>
       suggestion.title.toLowerCase().includes(value.toLowerCase())

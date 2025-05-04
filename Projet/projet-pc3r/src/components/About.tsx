@@ -3,20 +3,20 @@ import React from "react";
 const About: React.FC = () => {
   return (
     <div className="about-container">
-      <h1>À Propos du projet</h1>
+      <h1>À propos du projet</h1>
       <p className="about-text">
-        La mobilité urbaine est une nécessité pour les citoyens et citoyennes de notre ville. <br />
-        Notre mission est de vous procurer le plus d'informations pour mieux planifier vos déplacements à l'intérieur de la ville.
+        Ce projet a été réalisé dans le cadre de l’UE <strong>PC3R</strong> (Programmation Concurrente, Réactive, Répartie et Réticulaire).<br />
+        L’objectif est de développer un site web permettant aux utilisateurs de rechercher des films grâce à l’API <strong>TMDb</strong>, de les noter, et de laisser des avis.
       </p>
       <img
         className="about-image"
-        src="/assets/a-propos.jpg"
-        alt="vélo de proche"
+        src="/assets/movie-night.jpg"
+        alt="Soirée cinéma"
       />
       <p>
-        Photo de Tony,{" "}
+        Photo de Tima Miroshnichenko,{" "}
         <a
-          href="https://www.pexels.com/photo/black-mountain-bicycle-990113/"
+          href="https://www.pexels.com/photo/people-watching-a-movie-7991318/"
           className="about-link"
           aria-label="Voir sur Pexels"
           target="_blank"
@@ -26,9 +26,8 @@ const About: React.FC = () => {
         </a>
       </p>
       <p className="about-text">
-        Nous vous proposons une série d'informations qu'on souhaite vous être utile pour vos déplacements quotidiens en vélo. <br />
-        On vous encourage fortement à penser à planifier vos déplacements à l'avance et à limiter votre empreinte carbonique <br />
-        tout en vous gardant en forme!
+        L’application permet aux cinéphiles de partager leurs opinions, de consulter les avis des autres utilisateurs, et de découvrir les films les mieux notés par la communauté.
+        C’est un projet fullstack combinant front-end, back-end et base de données, avec une architecture réactive et répartie.
       </p>
       <div className="about-spacing"></div>
     </div>

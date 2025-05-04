@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import PageSelector from "./../subComponents/PageSelector";
+import PageSelector from "./subComponents/PageSelector";
 
 interface Category {
   id: number;
@@ -52,7 +52,7 @@ export default function Categories() {
   return (
     <div className="categories-container">
       <div className="content">
-        <h1>Catégories</h1>
+        <h1>Catégories<br /><span className="notice-count">Films triés par date de sortie</span></h1>
       </div>
 
       <div className="categories-list">

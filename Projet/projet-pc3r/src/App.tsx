@@ -6,7 +6,8 @@ import Home from "./components/Home";
 import About from "./components/About";
 import Footer from "./components/Footer";
 import Team from "./components/Team/Team";
-import Categories from "./components/Categories/Categories";
+import Categories from "./components/Categories";
+import Alphabetic from "./components/Alphabetic";
 import FilmDetail from "./components/FilmDetail";
 import LoginPage from "./components/LoginPage";
 import LogoutPage from "./components/LogoutPage";
@@ -22,6 +23,7 @@ function App() {
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/categories" element={<Categories />} />
+              <Route path="/alphabetic" element={<Alphabetic />} />
               <Route path="/about" element={<About />} />
               <Route path="/team" element={<Team />} />
               <Route path="/login" element={<LoginPage />} />

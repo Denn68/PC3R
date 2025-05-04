@@ -11,7 +11,6 @@ export const Home: React.FC = () => (
   <div className="home-container">
     <h1>Home</h1>
     <img
-      style={{ height: "360px", width: "400px" }}
       src="/assets/logo_website.jpg"
       alt="logo website"
     />
