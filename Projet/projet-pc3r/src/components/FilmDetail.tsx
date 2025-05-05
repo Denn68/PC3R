@@ -231,4 +231,4 @@ const FilmDetail: React.FC = () => {
     );
 };
 
-export default MovieDetail;
+export default FilmDetail;
