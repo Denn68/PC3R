@@ -49,7 +49,7 @@ const FilmDetail: React.FC = () => {
 
 
     useEffect(() => {
-        if (!id) return;
+        /*if (!id) return;
         fetchFilmData();
 
         const username = localStorage.getItem("username");
@@ -64,7 +64,7 @@ const FilmDetail: React.FC = () => {
                     }
                 })
                 .catch((err) => console.error("Erreur lors de la récupération :", err));
-        }
+        }*/
     }, []);
 
     useEffect(() => {
@@ -82,7 +82,7 @@ const FilmDetail: React.FC = () => {
     }, [hasRated]);
 
     const handleRatingSubmit = () => {
-        const username = localStorage.getItem("username");
+        /*const username = localStorage.getItem("username");
         if (!username || !id || selectedRating < 1 || selectedRating > 10) {
             setMessage("Merci de choisir une note entre 1 et 10.");
             return;
@@ -101,7 +101,7 @@ const FilmDetail: React.FC = () => {
             })
             .catch(() => {
                 setMessage("Impossible d'envoyer la note.");
-            });
+            });*/
     };
 
     if (!filmData) {
