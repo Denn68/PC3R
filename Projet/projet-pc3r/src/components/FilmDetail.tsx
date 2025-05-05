@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 interface MovieDetail {
     id: number;
@@ -22,6 +23,7 @@ interface Rate {
 }
 
 const FilmDetail: React.FC = () => {
+    const navigate = useNavigate();
     const { id } = useParams<{ id: string }>();
     const [filmData, setFilmData] = useState<MovieDetail | null>(null);
     const [isConnected, setIsConnected] = useState(false);
@@ -49,7 +51,7 @@ const FilmDetail: React.FC = () => {
 
 
     useEffect(() => {
-        /*if (!id) return;
+        if (!id) return;
         fetchFilmData();
 
         const username = localStorage.getItem("username");
@@ -64,7 +66,7 @@ const FilmDetail: React.FC = () => {
                     }
                 })
                 .catch((err) => console.error("Erreur lors de la récupération :", err));
-        }*/
+        }
     }, []);
 
     useEffect(() => {
@@ -82,7 +84,7 @@ const FilmDetail: React.FC = () => {
     }, [hasRated]);
 
     const handleRatingSubmit = () => {
-        /*const username = localStorage.getItem("username");
+        const username = localStorage.getItem("username");
         if (!username || !id || selectedRating < 1 || selectedRating > 10) {
             setMessage("Merci de choisir une note entre 1 et 10.");
             return;
@@ -101,7 +103,7 @@ const FilmDetail: React.FC = () => {
             })
             .catch(() => {
                 setMessage("Impossible d'envoyer la note.");
-            });*/
+            });
     };
 
     if (!filmData) {
@@ -199,7 +201,7 @@ const FilmDetail: React.FC = () => {
                             <div className="film-rating">
                                 <strong>Connectez-vous pour noter ce film :</strong>
                                 <button
-                                    onClick={() => window.location.href = "/login"}
+                                    onClick={() => navigate("/login")}
                                     className="login-button"
                                 >
                                     Se connecter | S'inscrire

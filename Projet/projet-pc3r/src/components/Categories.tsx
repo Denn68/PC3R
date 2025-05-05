@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import PageSelector from "./subComponents/PageSelector";
 
 interface Category {
@@ -15,6 +16,7 @@ interface Film {
 }
 
 export default function Categories() {
+  const navigate = useNavigate();
   const [categories, setCategories] = useState<Category[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [films, setFilms] = useState<Film[]>([]);
@@ -69,7 +71,7 @@ export default function Categories() {
 
       <div className="films-list">
         {films.map((film) => (
-          <div key={film.id} className="film-card" onClick={() => window.location.href = `/film/${film.id}`}>
+          <div key={film.id} className="film-card" onClick={() => navigate(`/film/${film.id}`)}>
             <img src={"data:image/jpeg;base64," + film.poster} alt={film.title} className="film-poster" />
             <h3>{film.title}</h3>
             <p>Sortie : {new Date(film.release_date).toLocaleDateString("fr-FR")}</p>

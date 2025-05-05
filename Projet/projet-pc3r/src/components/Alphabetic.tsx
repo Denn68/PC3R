@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import PageSelector from "./subComponents/PageSelector";
+import { useNavigate } from "react-router-dom";
 
 interface Film {
   id: number;
@@ -13,6 +14,7 @@ interface Film {
 const Letters = ["#", "A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"];
 
 export default function Alphabetic() {
+  const navigate = useNavigate();
   const [selectedLetter, setSelectedLetter] = useState<string | null>(null);
   const [films, setFilms] = useState<Film[]>([]);
   const [pageNumber, setPageNumber] = useState<number>(1);
@@ -56,7 +58,7 @@ export default function Alphabetic() {
 
       <div className="films-list">
         {films.map((film) => (
-          <div key={film.id} className="film-card" onClick={() => window.location.href = `/film/${film.id}`}>
+          <div key={film.id} className="film-card" onClick={() => navigate(`/film/${film.id.toString()}`)}>
             <img src={"data:image/jpeg;base64," + film.poster} alt={film.title} className="film-poster" />
             <h3>{film.title}</h3>
             <p>Sortie : {new Date(film.release_date).toLocaleDateString("fr-FR")}</p>

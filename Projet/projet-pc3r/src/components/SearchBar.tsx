@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 interface FilmSuggestion {
   id: number;
@@ -7,6 +8,7 @@ interface FilmSuggestion {
 }
 
 const SearchBar: React.FC = () => {
+  const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [filteredSuggestions, setFilteredSuggestions] = useState<FilmSuggestion[]>([]);
   const wrapperRef = useRef<HTMLDivElement>(null);
@@ -56,7 +58,7 @@ const SearchBar: React.FC = () => {
     setSearchTerm(suggestion.title);
     setFilteredSuggestions([]);
     // Rediriger vers la page de détails du film
-    window.location.href = `/film/${suggestion.id.toString()}`;
+    navigate(`/film/${suggestion.id.toString()}`);
   };
 
   return (
