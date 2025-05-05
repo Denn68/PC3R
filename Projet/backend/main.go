@@ -876,7 +876,7 @@ func main() {
 	http.HandleFunc("/users/create", enableCors(createUser))           // Route pour créer un utilisateur
 	http.HandleFunc("/users/delete", enableCors(deleteUser))           // Route pour supprimer un utilisateur
 
-	port := ":5432"
+	port := ":8080"
 	fmt.Println("Serveur démarré sur http://localhost" + port)
 	log.Fatal(http.ListenAndServe(port, nil))
 }
