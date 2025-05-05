@@ -31,7 +31,7 @@ const SearchBar: React.FC = () => {
       return;
     }
     else {
-      fetch(`http://localhost:8080/films/getByText?textInput=${value}`)
+      fetch(`https://pc3r.onrender.com/films/getByText?textInput=${value}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("Données récupérées :", data);

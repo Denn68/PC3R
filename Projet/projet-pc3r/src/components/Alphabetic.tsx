@@ -20,7 +20,7 @@ export default function Alphabetic() {
 
   useEffect(() => {
     if (selectedLetter) {
-      fetch(`http://localhost:8080/films/getByAlphabetLetter?letter=${selectedLetter}&page=${pageNumber}`)
+      fetch(`https://pc3r.onrender.com/films/getByAlphabetLetter?letter=${selectedLetter}&page=${pageNumber}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("Films récupérés :", data);

@@ -21,7 +21,7 @@ const LogoutPage: React.FC = () => {
 
         const username = localStorage.getItem("username");
         if (username) {
-            fetch(`http://localhost:8080/users/delete?username=${username}&password=${password}`)
+            fetch(`https://pc3r.onrender.com/users/delete?username=${username}&password=${password}`)
                 .then((res) => res.json())
                 .then(() => {
                     alert("Compte supprimé avec succès !");

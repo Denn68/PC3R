@@ -22,7 +22,7 @@ export default function Categories() {
   const [nbPages, setNbPages] = useState<number>(1);
 
   useEffect(() => {
-    fetch("http://localhost:8080/categories")
+    fetch("https://pc3r.onrender.com/categories")
       .then((res) => res.json())
       .then((data) => {
         console.log("Données récupérées :", data);
@@ -33,7 +33,7 @@ export default function Categories() {
 
   useEffect(() => {
     if (selectedCategory) {
-      fetch(`http://localhost:8080/categories/getFilms?category_id=${selectedCategory.id}&page=${pageNumber}`)
+      fetch(`https://pc3r.onrender.com/categories/getFilms?category_id=${selectedCategory.id}&page=${pageNumber}`)
         .then((res) => res.json())
         .then((data) => {
           console.log("Films récupérés :", data);

@@ -33,7 +33,7 @@ const FilmDetail: React.FC = () => {
     const [notice, setNotice] = useState<string>("");
 
     const fetchFilmData = () => {
-        fetch(`http://localhost:8080/films/getById?film_id=${id}`)
+        fetch(`https://pc3r.onrender.com/films/getById?film_id=${id}`)
             .then((res) => res.json())
             .then((data) => {
                 console.log("Données récupérées :", data);
@@ -56,7 +56,7 @@ const FilmDetail: React.FC = () => {
         const username = localStorage.getItem("username");
         if (username) {
             setIsConnected(true);
-            fetch(`http://localhost:8080/films/checkIfRated?film_id=${id}&username=${username}`)
+            fetch(`https://pc3r.onrender.com/films/checkIfRated?film_id=${id}&username=${username}`)
                 .then((res) => res.json())
                 .then((data) => {
                     if (data) {
@@ -72,7 +72,7 @@ const FilmDetail: React.FC = () => {
         const username = localStorage.getItem("username");
         if (!id || !username) return;
 
-        fetch(`http://localhost:8080/films/getRating?film_id=${id}&username=${username}`)
+        fetch(`https://pc3r.onrender.com/films/getRating?film_id=${id}&username=${username}`)
             .then((res) => res.json())
             .then((data) => {
                 if (data) {
@@ -89,7 +89,7 @@ const FilmDetail: React.FC = () => {
             return;
         }
 
-        fetch(`http://localhost:8080/films/rate?film_id=${id}&username=${username}&rating=${selectedRating}&notice=${notice}`)
+        fetch(`https://pc3r.onrender.com/films/rate?film_id=${id}&username=${username}&rating=${selectedRating}&notice=${notice}`)
             .then((res) => {
                 if (res.ok) {
                     setMessage("Merci pour votre note !");

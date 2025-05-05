@@ -17,7 +17,7 @@ const LoginPage: React.FC = () => {
             return;
         }
 
-        fetch(`http://localhost:8080/users/getAccount?username=${username}&password=${password}`)
+        fetch(`https://pc3r.onrender.com/users/getAccount?username=${username}&password=${password}`)
             .then((res) => res.json())
             .then((data) => {
                 console.log("Données récupérées :", data);
@@ -43,7 +43,7 @@ const LoginPage: React.FC = () => {
         }
 
         try {
-            const resCheck = await fetch(`http://localhost:8080/users/checkUsername?username=${username}`);
+            const resCheck = await fetch(`https://pc3r.onrender.com/users/checkUsername?username=${username}`);
             const dataCheck = await resCheck.json();
 
             if (dataCheck === "Username déjà pris") {
@@ -51,7 +51,7 @@ const LoginPage: React.FC = () => {
                 return;
             }
 
-            const resCreate = await fetch(`http://localhost:8080/users/create?username=${username}&password=${password}`);
+            const resCreate = await fetch(`https://pc3r.onrender.com/users/create?username=${username}&password=${password}`);
             const dataCreate = await resCreate.json();
 
             if (dataCreate) {
