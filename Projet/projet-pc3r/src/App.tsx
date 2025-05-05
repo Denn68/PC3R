@@ -8,7 +8,7 @@ import Footer from "./components/Footer";
 import Team from "./components/Team/Team";
 import Categories from "./components/Categories";
 import Alphabetic from "./components/Alphabetic";
-import FilmDetail from "./components/FilmDetail";
+import MovieDetail from "./components/FilmDetail";
 import LoginPage from "./components/LoginPage";
 import LogoutPage from "./components/LogoutPage";
 import { AuthProvider } from "./components/context/AuthContext";

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { NavLink } from "react-router-dom";
 import { useParams } from "react-router-dom";
 
-interface FilmDetail {
+interface MovieDetail {
     id: number;
     title: string;
     release_date: string;
@@ -24,7 +23,7 @@ interface Rate {
 
 const FilmDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
-    const [filmData, setFilmData] = useState<FilmDetail | null>(null);
+    const [filmData, setFilmData] = useState<MovieDetail | null>(null);
     const [isConnected, setIsConnected] = useState(false);
     const [selectedRating, setSelectedRating] = useState<number>(0);
     const [message, setMessage] = useState<string>("");
@@ -133,7 +132,7 @@ const FilmDetail: React.FC = () => {
                     <p className="film-average-rate">
                         <strong>Note moyenne :</strong>{" "}
                         <span
-                            className={`note ${filmData.nb_rate == 0
+                            className={`note ${filmData.nb_rate === 0
                                 ? "note-not-rated"
                                 : filmData.average_rate >= 8
                                     ? "note-high"
@@ -142,7 +141,7 @@ const FilmDetail: React.FC = () => {
                                         : "note-low"
                                 }`}
                         >
-                            {filmData.nb_rate == 0
+                            {filmData.nb_rate === 0
                                 ? "Pas encore noté"
                                 :
                                 filmData.average_rate.toFixed(1) + " / 10"}
@@ -232,4 +231,4 @@ const FilmDetail: React.FC = () => {
     );
 };
 
-export default FilmDetail;
+export default MovieDetail;

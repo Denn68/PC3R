@@ -21,7 +21,7 @@ const LoginPage: React.FC = () => {
             .then((res) => res.json())
             .then((data) => {
                 console.log("Données récupérées :", data);
-                if (data.id == "") {
+                if (data.id === "") {
                     alert(data.messageError);
                     return;
                 } else {
