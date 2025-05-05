@@ -309,29 +309,33 @@ func getByAlphabetLetterFromDB(db *sql.DB, letter string, pageNumber int) ([]Fil
 	const pageSize = 20
 	offset := (pageNumber - 1) * pageSize
 
-	var rows *sql.Rows
-	var totalFilms int
-	var err error
+	var (
+		rows       *sql.Rows
+		totalFilms int
+		err        error
+	)
 
-	// Cas spécial : films ne commençant pas par une lettre
 	if letter == "#" {
+		// Comptage des films ne commençant PAS par une lettre (A-Z)
 		err = db.QueryRow(`
 			SELECT COUNT(*) 
 			FROM films 
-			WHERE LEFT(title, 1) !~* '^[A-Z]'
+			WHERE LEFT(UPPER(title), 1) !~ '^[A-Z]'
 		`).Scan(&totalFilms)
 		if err != nil {
 			return nil, 0, err
 		}
 
+		// Récupération des films correspondants
 		rows, err = db.Query(`
 			SELECT id, title, release_date, poster_path, average_rate, nb_rate
 			FROM films 
-			WHERE LEFT(title, 1) !~* '^[A-Z]'
+			WHERE LEFT(UPPER(title), 1) !~ '^[A-Z]'
 			ORDER BY title ASC
 			LIMIT $1 OFFSET $2
 		`, pageSize, offset)
 	} else {
+		// Comptage des films commençant par la lettre sélectionnée
 		err = db.QueryRow(`
 			SELECT COUNT(*) 
 			FROM films 
@@ -341,6 +345,7 @@ func getByAlphabetLetterFromDB(db *sql.DB, letter string, pageNumber int) ([]Fil
 			return nil, 0, err
 		}
 
+		// Récupération des films correspondants
 		rows, err = db.Query(`
 			SELECT id, title, release_date, poster_path, average_rate, nb_rate
 			FROM films 
@@ -349,6 +354,7 @@ func getByAlphabetLetterFromDB(db *sql.DB, letter string, pageNumber int) ([]Fil
 			LIMIT $2 OFFSET $3
 		`, letter+"%", pageSize, offset)
 	}
+
 	if err != nil {
 		return nil, 0, err
 	}
@@ -358,8 +364,10 @@ func getByAlphabetLetterFromDB(db *sql.DB, letter string, pageNumber int) ([]Fil
 	var films []FilmPreviews
 
 	for rows.Next() {
-		var film FilmPreviews
-		var posterPath string
+		var (
+			film       FilmPreviews
+			posterPath string
+		)
 
 		err := rows.Scan(&film.Id, &film.Title, &film.ReleaseDate, &posterPath, &film.AverageRate, &film.NbRate)
 		if err != nil {
