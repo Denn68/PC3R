@@ -44,13 +44,6 @@ const FilmDetail: React.FC = () => {
     };
 
     useEffect(() => {
-        if (filmData) {
-            console.log("filmData mis à jour :", filmData);
-        }
-    }, [filmData]);
-
-
-    useEffect(() => {
         if (!id) return;
         fetchFilmData();
 
@@ -67,7 +60,7 @@ const FilmDetail: React.FC = () => {
                 })
                 .catch((err) => console.error("Erreur lors de la récupération :", err));
         }
-    }, []);
+    }, [id]);
 
     useEffect(() => {
         const username = localStorage.getItem("username");
