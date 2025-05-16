@@ -82,6 +82,16 @@ func enableCors(next http.HandlerFunc) http.HandlerFunc {
 	}
 }
 
+func methodHandler(method string, handler http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != method {
+			http.Error(w, "Méthode non autorisée", http.StatusMethodNotAllowed)
+			return
+		}
+		handler(w, r)
+	}
+}
+
 func connectToDB() (*sql.DB, error) {
 	connStr := "postgresql://filmdb_1s5v_user:MI2FmSsc1zWuyfGEmJEmf8fE69S3tNpp@dpg-d0bt4imuk2gs7384e86g-a/filmdb_1s5v"
 	db, err := sql.Open("postgres", connStr)
@@ -869,22 +879,26 @@ func main() {
 	}
 	defer db.Close()
 
-	http.HandleFunc("/categories", enableCors(getCategories))
-	http.HandleFunc("/categories/getFilms", enableCors(getFilmsByCategories))
-	http.HandleFunc("/films/getById", enableCors(getFilmById))
-	http.HandleFunc("/films/getByAlphabetLetter", enableCors(getByAlphabetLetter)) // Route pour récupérer les films par ordre alphabétique
-	http.HandleFunc("/films/getByText", enableCors(getFilmByText))
-	http.HandleFunc("/films/rate", enableCors(rateFilm))
-	http.HandleFunc("/films/checkIfRated", enableCors(checkIfRated))
-	http.HandleFunc("/films/getRating", enableCors(getRating))
+	http.HandleFunc("/categories", enableCors(methodHandler("GET", getCategories)))
+	http.HandleFunc("/categories/getFilms", enableCors(methodHandler("GET", getFilmsByCategories)))
 
-	// Définir les routes pour user
-	http.HandleFunc("/users/getAccount", enableCors(getAccount))       // Route pour récuperer un compte
-	http.HandleFunc("/users/checkUsername", enableCors(checkUsername)) // Route pour supprimer un utilisateur
-	http.HandleFunc("/users/create", enableCors(createUser))           // Route pour créer un utilisateur
-	http.HandleFunc("/users/delete", enableCors(deleteUser))           // Route pour supprimer un utilisateur
+	http.HandleFunc("/films/getById", enableCors(methodHandler("GET", getFilmById)))
+	http.HandleFunc("/films/getByAlphabetLetter", enableCors(methodHandler("GET", getByAlphabetLetter)))
+	http.HandleFunc("/films/getByText", enableCors(methodHandler("GET", getFilmByText)))
+	http.HandleFunc("/films/rate", enableCors(methodHandler("POST", rateFilm)))
+	http.HandleFunc("/films/checkIfRated", enableCors(methodHandler("POST", checkIfRated)))
+	http.HandleFunc("/films/getRating", enableCors(methodHandler("POST", getRating)))
+
+	http.HandleFunc("/users/getAccount", enableCors(methodHandler("POST", getAccount)))
+	http.HandleFunc("/users/checkUsername", enableCors(methodHandler("POST", checkUsername)))
+	http.HandleFunc("/users/create", enableCors(methodHandler("POST", createUser)))
+	http.HandleFunc("/users/delete", enableCors(methodHandler("DELETE", deleteUser)))
 
 	port := ":8080"
 	fmt.Println("Serveur démarré sur http://localhost" + port)
-	log.Fatal(http.ListenAndServe(port, nil))
+	err = http.ListenAndServe(port, nil)
+	if err != nil {
+		log.Fatal("Erreur lors du démarrage du serveur :", err)
+	}
+	log.Println("Serveur arrêté")
 }

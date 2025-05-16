@@ -83,20 +83,32 @@ const FilmDetail: React.FC = () => {
             return;
         }
 
-        fetch(`https://pc3r.onrender.com/films/rate?film_id=${id}&username=${username}&rating=${selectedRating}&notice=${notice}`)
+        fetch("https://pc3r.onrender.com/films/rate", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              film_id: id,
+              username: username,
+              rating: selectedRating,
+              notice: notice,
+            }),
+          })
             .then((res) => {
-                if (res.ok) {
-                    setMessage("Merci pour votre note !");
-                    setHasRated(true);
-                    setRating(selectedRating);
-                    fetchFilmData(); // <-- mise à jour de la moyenne
-                } else {
-                    setMessage("Une erreur est survenue.");
-                }
+              if (res.ok) {
+                setMessage("Merci pour votre note !");
+                setHasRated(true);
+                setRating(selectedRating);
+                fetchFilmData(); // mettre à jour les infos du film
+              } else {
+                setMessage("Une erreur est survenue.");
+              }
             })
             .catch(() => {
-                setMessage("Impossible d'envoyer la note.");
+              setMessage("Impossible d'envoyer la note.");
             });
+          
     };
 
     if (!filmData) {

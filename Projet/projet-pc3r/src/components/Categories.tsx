@@ -27,7 +27,6 @@ export default function Categories() {
     fetch("https://pc3r.onrender.com/categories")
       .then((res) => res.json())
       .then((data) => {
-        console.log("Données récupérées :", data);
         setCategories(data);
       })
       .catch((err) => console.error("Erreur lors de la récupération :", err));

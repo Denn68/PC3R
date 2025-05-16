@@ -5,10 +5,10 @@ import { useAuth } from "./context/AuthContext";
 const LogoutPage: React.FC = () => {
     const [password, setPassword] = React.useState("");
     const navigate = useNavigate();
-    const { logout } = useAuth(); // 👈 accès à la fonction logout du contexte
+    const { logout } = useAuth();
 
     const handleLogout = () => {
-        logout(); // 👈 met à jour le contexte + supprime localStorage
+        logout();
         navigate("/");
     };
 
@@ -21,14 +21,24 @@ const LogoutPage: React.FC = () => {
 
         const username = localStorage.getItem("username");
         if (username) {
-            fetch(`https://pc3r.onrender.com/users/delete?username=${username}&password=${password}`)
+            fetch("https://pc3r.onrender.com/users/delete", {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  username: username,
+                  password: password,
+                }),
+              })
                 .then((res) => res.json())
                 .then(() => {
-                    alert("Compte supprimé avec succès !");
-                    logout(); // 👈 met à jour le contexte + supprime localStorage
-                    navigate("/");
+                  alert("Compte supprimé avec succès !");
+                  logout();
+                  navigate("/");
                 })
                 .catch((err) => console.error("Erreur lors de la suppression :", err));
+              
         }
     };
 

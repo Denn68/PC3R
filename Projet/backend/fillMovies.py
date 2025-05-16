@@ -14,6 +14,25 @@ db_config = {
     'database': 'filmdb_1s5v'
 }
 
+def get_latest_release_date():
+    connection = None
+    latest_date = None
+    try:
+        connection = psycopg2.connect(**db_config)
+        cursor = connection.cursor()
+        cursor.execute("SELECT MAX(release_date) FROM films;")
+        result = cursor.fetchone()
+        if result and result[0]:
+            latest_date = result[0]
+        cursor.close()
+    except Exception as e:
+        print(f"Erreur en récupérant la dernière date de sortie : {e}")
+    finally:
+        if connection:
+            connection.close()
+    return latest_date
+
+
 # Fonction pour récupérer les catégories de films
 def get_all_categories(api_key):
     url = f"https://api.themoviedb.org/3/genre/movie/list?api_key={api_key}"
@@ -27,7 +46,7 @@ def get_all_categories(api_key):
         return []
 
 # Fonction pour récupérer les films populaires
-def get_all_popular_movies(api_key):
+def get_all_popular_movies(api_key, last_release_date=None):
     all_movies = []
     page = 1
     today = datetime.today().date()
@@ -46,18 +65,29 @@ def get_all_popular_movies(api_key):
                 if movie.get('release_date') and datetime.strptime(movie['release_date'], '%Y-%m-%d').date() <= today
             ]
 
+            # Filtrer ceux dont la date est > last_release_date si défini
+            if last_release_date:
+                released_movies = [
+                    movie for movie in released_movies
+                    if datetime.strptime(movie['release_date'], '%Y-%m-%d').date() > last_release_date
+                ]
+
+                # Si aucun film plus récent, on arrête la pagination
+                if not released_movies:
+                    break
+
             all_movies.extend(released_movies)
-            #print(f"Page {page} : {len(released_movies)} films sortis récupérés.")
-            
-            # Fin de pagination
+
             if page >= data.get('total_pages', 1):
                 break
+
             page += 1
         else:
             print(f"Erreur: {response.status_code}")
             break
 
     return all_movies
+
 
 # Fonction pour insérer les catégories dans la base de données
 def insert_categories_to_db(categories):
@@ -160,18 +190,13 @@ for category in categories:
     # Insérer la catégorie dans la base de données
     insert_categories_to_db([category])
 
-# Récupérer tous les films populaires
-movies = get_all_popular_movies(api_key)
+last_date = get_latest_release_date()
+print(f"Dernière date de sortie enregistrée : {last_date}")
 
-print(f"Nombre total de films récupérés : {len(movies)}")
+movies = get_all_popular_movies(api_key, last_release_date=last_date)
 
-# Afficher les titres des films récupérés et les insérer dans la base de données
+print(f"Nombre total de nouveaux films récupérés : {len(movies)}")
+
 for movie in movies:
-    #print(f"Title: {movie['title']}")
-    #print(f"Overview: {movie['overview']}")
-    #print(f"Release Date: {movie['release_date']}")
-    #print('-' * 50)
-    #print(f"Vote : {movie.get('vote_average', 0)}")
-
-    # Insérer le film dans la base de données
     insert_movie_to_db(movie)
+
