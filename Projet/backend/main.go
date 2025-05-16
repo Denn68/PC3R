@@ -886,11 +886,11 @@ func main() {
 	http.HandleFunc("/films/getByAlphabetLetter", enableCors(methodHandler("GET", getByAlphabetLetter)))
 	http.HandleFunc("/films/getByText", enableCors(methodHandler("GET", getFilmByText)))
 	http.HandleFunc("/films/rate", enableCors(methodHandler("POST", rateFilm)))
-	http.HandleFunc("/films/checkIfRated", enableCors(methodHandler("POST", checkIfRated)))
-	http.HandleFunc("/films/getRating", enableCors(methodHandler("POST", getRating)))
+	http.HandleFunc("/films/checkIfRated", enableCors(methodHandler("GET", checkIfRated)))
+	http.HandleFunc("/films/getRating", enableCors(methodHandler("GET", getRating)))
 
-	http.HandleFunc("/users/getAccount", enableCors(methodHandler("POST", getAccount)))
-	http.HandleFunc("/users/checkUsername", enableCors(methodHandler("POST", checkUsername)))
+	http.HandleFunc("/users/getAccount", enableCors(methodHandler("GET", getAccount)))
+	http.HandleFunc("/users/checkUsername", enableCors(methodHandler("GET", checkUsername)))
 	http.HandleFunc("/users/create", enableCors(methodHandler("POST", createUser)))
 	http.HandleFunc("/users/delete", enableCors(methodHandler("DELETE", deleteUser)))
 
