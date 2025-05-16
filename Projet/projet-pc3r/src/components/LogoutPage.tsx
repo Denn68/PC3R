@@ -21,15 +21,11 @@ const LogoutPage: React.FC = () => {
 
         const username = localStorage.getItem("username");
         if (username) {
-            fetch("https://pc3r.onrender.com/users/delete", {
+            fetch("https://pc3r.onrender.com/users/delete?username="+username+"&password="+password, {
                 method: "DELETE",
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                  username: username,
-                  password: password,
-                }),
               })
                 .then((res) => res.json())
                 .then(() => {

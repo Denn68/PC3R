@@ -83,17 +83,11 @@ const FilmDetail: React.FC = () => {
             return;
         }
 
-        fetch("https://pc3r.onrender.com/films/rate", {
+        fetch("https://pc3r.onrender.com/films/rate?film_id="+id+"&username="+username+"&rating="+selectedRating+"&notice="+notice, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({
-              film_id: id,
-              username: username,
-              rating: selectedRating,
-              notice: notice,
-            }),
           })
             .then((res) => {
               if (res.ok) {

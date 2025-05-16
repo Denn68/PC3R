@@ -51,15 +51,11 @@ const LoginPage: React.FC = () => {
                 return;
             }
 
-            const resCreate = await fetch("https://pc3r.onrender.com/users/create", {
+            const resCreate = await fetch("https://pc3r.onrender.com/users/create?username="+username+"&password="+password, {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                 },
-                body: JSON.stringify({
-                  username: username,
-                  password: password,
-                }),
               });
               
             const dataCreate = await resCreate.json();
